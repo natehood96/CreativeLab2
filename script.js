@@ -2,6 +2,7 @@
 var CANVAS_WIDTH = 800;
 var CANVAS_HEIGHT = 600;
 var TRACK_WIDTH = 300;
+var MAX_X_OFFSET = 200;
 
 //-----------GENERAL SET UP----------------
 var context;
@@ -24,7 +25,7 @@ var canvas = myGameArea.canvas;
 
 function startGame() {
   myGameArea.start();
-  vehicle = new vehicle(20, 20, "blue", 0, 0, 10, 10);
+  vehicle = new vehicle(20, 20, "blue", CANVAS_WIDTH/2 - 10, CANVAS_HEIGHT/2 + 10, 10, 10);
   track = new track(TRACK_WIDTH, 5, "white");
 }
 
@@ -100,20 +101,50 @@ function track(width, lineHeight, color) {
 
   //initialize lines
   this.lines = [];
+  initTrackLines(this, CANVAS_HEIGHT/this.lineHeight, this.width, CANVAS_HEIGHT, this.lineHeight, this.color);
 
-  var xOffsetGoal = 0;
-  var lastXOffsetGoal = 0;
-  var xOffset = 0;
-  var cyclesPerGoal = 30*this.lineHeight;
-  for (var y = 0; y < CANVAS_HEIGHT; y += this.lineHeight) {
-    if(y%cyclesPerGoal == 0) {
-      lastXOffsetGoal = xOffsetGoal;
-      xOffsetGoal += Math.random()*100 - 50;
-      console.log("old goal, new goal: " + lastXOffsetGoal + ", " + xOffsetGoal);
+  this.scroll = function(y){
+    //figure out how many lines to add/remove
+    var n = Math.abs(Math.round(y/track.lineHeight));
+      
+    //remove track lines
+    for(var i = 0; i < n; i++) {
+      track.lines.pop();
     }
-    xOffset = lastXOffsetGoal + (y%cyclesPerGoal + 1)*(xOffsetGoal-lastXOffsetGoal)/cyclesPerGoal;
-    console.log("xOffset: " + xOffset);
-    this.lines.push(new trackLine(xOffset, this.width, y, this.lineHeight, this.color = color));
+
+    //update y value on all lines
+    $.each(track.lines, function(){
+      this.y += y;
+    });
+
+    //add new lines
+    initTrackLines(track, n, track.width, track.lines[0].y, track.lineHeight, track.color);
+  }
+}
+
+var xOffsetGoal = 0;
+var oldXOffsetGoal = xOffsetGoal;
+var cyclesPerGoal = 25;
+var goalProgressCounter = cyclesPerGoal;
+function initTrackLines(track, numLines, width, initialY, lineHeight, color) {
+  var xOffset = 0;
+  var newLine;
+  var y = initialY;
+
+  for (var i = 0; i < numLines; i++) {
+    y -= lineHeight;
+    if(goalProgressCounter == cyclesPerGoal) {
+      oldXOffsetGoal = xOffsetGoal;
+      goalProgressCounter = 0;
+      do {
+        xOffsetGoal += Math.random()*100 - 50;
+      }
+      while (xOffsetGoal > MAX_X_OFFSET || xOffsetGoal < -MAX_X_OFFSET);
+    }
+    xOffset = oldXOffsetGoal + goalProgressCounter*(xOffsetGoal-oldXOffsetGoal)/cyclesPerGoal;
+    newLine = new trackLine(xOffset, width, y, lineHeight, color);
+    track.lines.unshift(newLine);
+    goalProgressCounter++;
   }
 }
 
@@ -139,7 +170,7 @@ $(document).ready(function() {
   var up, down, left, right;
   $(document).on("keydown", function(e) {
     var newX = vehicle.x;
-    var newY = vehicle.y;
+    var scrollAmmount = 0;
 
     switch(e.which){
       case 37: // left
@@ -162,10 +193,10 @@ $(document).ready(function() {
     }
 
     if(up){
-      newY -= vehicle.speedV;
+      scrollAmmount += vehicle.speedV;
     }
     if(down){
-      newY += vehicle.speedV;
+      //scrollAmmount -= vehicle.speedV;
     }
     if(left){
       newX -= vehicle.speedH;
@@ -174,7 +205,8 @@ $(document).ready(function() {
       newX += vehicle.speedH;
     }
 
-    vehicle.moveTo(newX, newY);
+    track.scroll(scrollAmmount);
+    vehicle.moveTo(newX, vehicle.y);
     e.preventDefault();
   });
 

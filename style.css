@@ -1,0 +1,13 @@
+body {
+  display: grid;
+  grid-template-rows: auto auto;
+  grid-template-columns: auto;
+  justify-content: center;
+  align-content: center;
+}
+
+canvas {
+  grid-row: 1/2;
+  grid-column: 1/2;
+  border: black 3px solid;
+}

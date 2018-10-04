@@ -12,17 +12,21 @@
 <body>
 
     <div id="mainContent">
+        <h1> Welcome to your pokemon training!</h1>
         <form id="car-form">
             <div class="form-row">
-                    <label for="selectCar">Select a car</label>
-                    <select class="form-control">
-                        <option selected>Choose...</option>
+                    <label for="selectPoke">Select your starter pokemon</label>
+                    <select class="form-control" id="pokeInput" name="differentPokemon">
+                        <option value = "1" >Charmander</option>
+                        <option value = "2">Squirtle</option>
+                        <option value = "3">Bulbasaur</option>
+                        <option disabled selected>Choose...</option>
                     </select>
                 </div>
             </div>
             <div class="form-row text-center">
                 <button id="submitButton" type="submit">
-                    Start your engine</button>
+                    Start your training</button>
             </div>
         </form>
         <p class="text-center" id="result"></p>

@@ -63,7 +63,7 @@ function preload(){
 function startGame() {
   myGameArea.start();
   $("#level span").text(LEVEL.toString());
-  $("#time span").text(SECONDS.toString() + "  seconds");
+  $("#time span").text(SECONDS.toString() + " seconds");
   myVehicle = new vehicle(30, 60, "img/car.png", CANVAS_WIDTH/2 - 15, CANVAS_HEIGHT - 100, 10, 10);
 
   myTrack = new track(TRACK_WIDTH, 5, "white");
@@ -120,7 +120,7 @@ function levelUp() {
 
 function secondPassed() {
   SECONDS++;
-  $("#time span").text(SECONDS.toString() + "seconds");
+  $("#time span").text(SECONDS.toString() + " seconds");
 }
 
 //--------------VEHICLE------------------

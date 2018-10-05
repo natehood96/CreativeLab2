@@ -3,9 +3,14 @@ var CANVAS_WIDTH = 800;
 var CANVAS_HEIGHT = 600;
 var TRACK_WIDTH = 300;
 var MAX_X_OFFSET = 200;
+var SCROLL_SPEED = 30;
+var REFRESH_RATE = 30;
+
 
 //-----------GENERAL SET UP----------------
 var context;
+var leftKeyDown, rightKeyDown;
+
 var myGameArea = {
   canvas : document.createElement("canvas"),
   start : function() {
@@ -14,10 +19,13 @@ var myGameArea = {
     this.context = this.canvas.getContext("2d");
     context = this.context;
     document.body.insertBefore(this.canvas, document.body.childNodes[0]);
-    this.interval = setInterval(updateGameArea, 10);
+    this.interval = setInterval(updateGameArea, REFRESH_RATE);
   },
   clear : function() {
       this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
+  },
+  stop : function() {
+    clearInterval(this.interval);
   }
 };
 
@@ -25,7 +33,7 @@ var canvas = myGameArea.canvas;
 
 function startGame() {
   myGameArea.start();
-  vehicle = new vehicle(20, 20, "blue", CANVAS_WIDTH/2 - 10, CANVAS_HEIGHT/2 + 10, 10, 10);
+  vehicle = new vehicle(20, 20, "blue", CANVAS_WIDTH/2 - 10, CANVAS_HEIGHT - 100, 10, 10);
   track = new track(TRACK_WIDTH, 5, "white");
 }
 
@@ -36,11 +44,21 @@ function updateGameArea() {
   context.fillStyle = "green";
   context.fillRect(0, 0, canvas.width, canvas.height);
 
-  //draw track
+  //update track
   track.update();
 
   //update vehicle
   vehicle.update();
+
+  //check to see if vehicle is off track; if so, end game
+  if(!track.contains(vehicle.x, vehicle.y, vehicle.width, vehicle.height)){
+    endGame();
+  }
+}
+
+function endGame() {
+  myGameArea.stop();
+  alert("You lost :(");
 }
 
 
@@ -57,6 +75,16 @@ function vehicle(width, height, color, x, y, speedV, speedH) {
 
   //function to draw vehicle
   this.update = function(){
+    //move vehicle
+    var newX = this.x;
+    if(leftKeyDown){
+      newX -= vehicle.speedH;
+    }
+    if(rightKeyDown){
+      newX += vehicle.speedH;
+    }
+    vehicle.moveTo(newX, vehicle.y);
+
     context.fillStyle = color;
     context.fillRect(this.x, this.y, this.width, this.height);
   };
@@ -98,6 +126,8 @@ function track(width, lineHeight, color) {
 
   //function to draw track
   this.update = function() {
+    this.scroll(SCROLL_SPEED);
+
     $.each(this.lines, function(){
         this.update();
     })
@@ -124,6 +154,25 @@ function track(width, lineHeight, color) {
 
     //add new lines
     initTrackLines(track, n, track.width, track.lines[track.lines.length-1].y - track.lineHeight, track.lineHeight, track.color);
+  }
+
+  //function to determine if a point is on track
+  this.contains = function(x, y, w, h){
+    //figure out which track line is at this y
+    var i = this.lines.length - Math.round(y/this.lineHeight - 0.5) - 1;
+
+    //loop through all track lines that are within range of the object
+    for (var j = 0; this.lines[i - j].y <= y + h; j++){
+      var left = isWithinRect(x, y + j*lineHeight, this.lines[i - j].x, this.lines[i - j].y, this.lines[i - j].width, this.lines[i - j].height);
+      var right = isWithinRect(x + w, y + j*lineHeight, this.lines[i - j].x, this.lines[i - j].y, this.lines[i - j].width, this.lines[i - j].height);
+      
+      if (!left || !right) {
+        return false;
+      }
+    }
+
+    //if we made it here, we're good!
+    return true;
   }
 }
 
@@ -180,46 +229,31 @@ function trackLine(xCenterOffset, width, y, height, color) {
   }
 }
 
+//------------------HELPERS-----------------------
+function isWithinRect(x, y, rx, ry, rw, rh) {
+  return x >= rx && y >= ry && x <= (rx + rw) && y <= (ry + rh);
+}
+
 //-----------------RUNNING GAME-------------------
 $(document).ready(function() {
 
   startGame();
 
   //move car when arrow keys are pressed
-  var up, left, right;
   $(document).on("keydown", function(e) {
-    var newX = vehicle.x;
-    var scrollAmmount = 0;
 
     switch(e.which){
       case 37: // left
-        left = true;
-      break;
-
-      case 38: // up
-        up = true;
+        leftKeyDown = true;
       break;
 
       case 39: // right
-        right = true;
+        rightKeyDown = true;
       break;
 
       default: return; // exit this handler for other keys
     }
 
-    if(up){
-      scrollAmmount += vehicle.speedV;
-    }
-
-    if(left){
-      newX -= vehicle.speedH;
-    }
-    if(right){
-      newX += vehicle.speedH;
-    }
-
-    track.scroll(scrollAmmount);
-    vehicle.moveTo(newX, vehicle.y);
     e.preventDefault();
   });
 
@@ -229,15 +263,11 @@ $(document).ready(function() {
 
     switch(e.which){
       case 37: // left
-        left = false;
-      break;
-
-      case 38: // up
-        up = false;
+        leftKeyDown = false;
       break;
 
       case 39: // right
-        right = false;
+        rightKeyDown = false;
       break;
 
       default: return; // exit this handler for other keys

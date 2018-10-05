@@ -6,10 +6,44 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="script.js"></script>
   </head>
-    <img id="racecar" src="images/black-white-racecar.png" width="18%" />
 
-  <body id = 'x'>
+  <body>
+    <div id="instructions">
+      <h1>
+        Race to Pallet Town<br><br>
+        <img src="images/PalletTown.png" height="450px">
+      </h1>
+      <p>
+        You're a Pokemon on a mission: getting to Pallet Town. You've got a fast car,
+        but the road is unpredictable and filled with trainers who are out to get you. 
+      </p>
+      <p>
+        Use the left and right arrow keys to drive side to side.
+        Make sure you stay on the path and avoid the trainers trying to stop you!
+      </p>
+      <p>
+        As you level up along the way, the game will become more difficult. 
+      </p>
+      <p>
+        Once you reach Pallet Town, keep playing to see how long you can survive.
+      </p>
+      <p>
+        Press "p" at any time to pause the game, and "r" to resume.
+      </p>
+      <button id="startBtn">Start!</button>
+    </div>
+    <div id="stats" style="display: none;">
+      <div id="time">
+        <b>Time:</b> <span></span>
+      </div>
 
+      <div id="level">
+        <b>Level:</b> <span></span>
+      </div>
+
+      <div id="msg">
+      </div>
+    </div>
   </body>
 
 

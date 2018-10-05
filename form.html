@@ -8,13 +8,15 @@
 
 </head>
 
-<body>
-
+<body id = "main-background">
+    <img src="images/Pokeball.png" id = "pokeball-img" />
     <div id="mainContent">
-        <h1> Welcome to your pokemon training!</h1>
+        <h1 class = "text-border"> Welcome to your pokemon training!</h1>
         <form id="car-form">
             <div class="form-row">
-                    <label for="selectPoke">Select your starter pokemon</label>
+                <h1>
+                    <label class = "text-border" for="selectPoke">Select your starter pokemon</label>
+                    </h1>
                     <select class="form-control" id="pokeInput">
                         <option value = "Charmander" >Charmander</option>
                         <option value = "Squirtle">Squirtle</option>
@@ -30,7 +32,8 @@
         </form>
         <p class="text-center" id="result"></p>
         <p class = "pokemon image">
-            <img id="squr-image" src="" width="18%" />
+            <!-- <img id="squr-image" src="" width="28%" /> -->
+            <img id="squr-image" src="Error.src" onerror="this.style.display='none'" width="28%" />
         </p>
     </div>
 </body>

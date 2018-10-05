@@ -29,6 +29,7 @@ $(document).ready(function () {
                     var pokeUrl = parsed_json.card.imageUrl;
                     console.log(type);
                     $('#squr-image').attr('src', pokeUrl);
+                    $('#squr-image').show();
                     //e.preventDefault();
                 }
             });

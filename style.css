@@ -4,10 +4,31 @@ body {
   grid-template-columns: auto;
   justify-content: center;
   align-content: center;
+  text-align: center;
 }
 
 canvas {
   grid-row: 1/2;
   grid-column: 1/2;
   border: black 3px solid;
+}
+
+#pokeball-img{
+  /* background: url('images/Pokeball.png') no-repeat fixed center; */
+    /* position: absolute; */
+    position: fixed;
+    top: 0px;
+    bottom: 0px;
+    left: calc(50% - 310px);
+    z-index: -1;
+    display: inline-block;
+    width: 600px;
+    opacity: .95;
+}
+/* #main-background{
+  background: url('images/PalletTown.png') no-repeat fixed center;
+}  */
+.text-border {
+    color: rgba(153, 235, 242, 0.838);
+    text-shadow: -1px 0 blue, 0 2px black, .2px 0 black, 0 -1px black;
 }

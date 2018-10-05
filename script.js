@@ -34,9 +34,14 @@ var myGameArea = {
 
 var canvas = myGameArea.canvas;
 
+function preload(){
+  car = loadImage('images/black-white-racecar.png');
+}
+
 function startGame() {
   myGameArea.start();
   vehicle = new vehicle(30, 60, "img/car.png", CANVAS_WIDTH/2 - 15, CANVAS_HEIGHT - 100, 10, 10);
+
   track = new track(TRACK_WIDTH, 5, "white");
 }
 
@@ -79,14 +84,14 @@ function vehicle(width, height, img, x, y, speedV, speedH) {
   this.width = width;
   this.height = height;
   this.x = x;
-  this.y = y; 
+  this.y = y;
   this.speedV = speedV;
   this.speedH = speedH;
   this.image = new Image();
   this.image.src = img;
 
   //function to draw vehicle
-  this.update = function(){
+  this.update = function () {
     //move vehicle
     var newX = this.x;
     if(leftKeyDown){

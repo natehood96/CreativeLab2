@@ -1,0 +1,43 @@
+<html>
+
+<head>
+    <title> Racing Game</title>
+    <link href="style.css" rel="stylesheet">
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="form.js"></script>
+
+</head>
+
+<body id = "main-background">
+    <img src="images/Pokeball.png" id = "pokeball-img" />
+    <div id="mainContent">
+        <h1 class = "text-border"> Welcome to your pokemon training!</h1>
+        <form id="car-form">
+            <div class="form-row">
+                <h1>
+                    <label class = "text-border" for="selectPoke">Select your starter pokemon</label>
+                    </h1>
+                    <select class="form-control" id="pokeInput">
+                        <option value = "Charmander" >Charmander</option>
+                        <option value = "Squirtle">Squirtle</option>
+                        <option value = "Bulbasaur">Bulbasaur</option>
+                        <option selected disabled>Choose...</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row text-center">
+                <button id="submitButton" type="submit">
+                    Start your training</button>
+            </div>
+        </form>
+        <p class="text-center" id="result"></p>
+        <p class = "pokemon image">
+            <!-- <img id="squr-image" src="" width="28%" /> -->
+            <img id="squr-image" src="Error.src" onerror="this.style.display='none'" width="28%" />
+        </p>
+    </div>
+</body>
+</html>
+
+
+    

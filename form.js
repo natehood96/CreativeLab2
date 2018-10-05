@@ -8,7 +8,6 @@ $(document).ready(function () {
     $("#pokeInput").change(function () {
         var pokemonName = $('#pokeInput :selected').text();
         console.log(pokemonName);
-        $("#submitButton").click(function (e) {
             var myUrl = "";
              if (pokemonName == 'Squirtle'){
                  myUrl = "https://api.pokemontcg.io/v1/cards/bw8-24";
@@ -33,7 +32,9 @@ $(document).ready(function () {
                     //e.preventDefault();
                 }
             });
+        $("#submitButton").click(function (e) {
             e.preventDefault();
+            window.location.href ="game.html";
            // return false;
         });
     });

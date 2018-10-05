@@ -3,8 +3,10 @@ var CANVAS_WIDTH = 800;
 var CANVAS_HEIGHT = 600;
 var TRACK_WIDTH = 300;
 var MAX_X_OFFSET = 200;
-var SCROLL_SPEED = 30;
+var SCROLL_SPEED = 15;
 var REFRESH_RATE = 30;
+var OBSTACLE_FREQUENCY = 300;
+var NUM_PROFS = 32;
 
 
 //-----------GENERAL SET UP----------------
@@ -37,13 +39,8 @@ function preload(){
 
 function startGame() {
   myGameArea.start();
-<<<<<<< HEAD
+  vehicle = new vehicle(30, 60, "img/car.png", CANVAS_WIDTH/2 - 15, CANVAS_HEIGHT - 100, 10, 10);
 
-
-  vehicle = new vehicle(20, 20, "blue", CANVAS_WIDTH/2 - 10, CANVAS_HEIGHT/2 + 10, 10, 10);
-=======
-  vehicle = new vehicle(20, 20, "blue", CANVAS_WIDTH/2 - 10, CANVAS_HEIGHT - 100, 10, 10);
->>>>>>> 0abd6441dc144518e7b878b53642ae88bd84b0df
   track = new track(TRACK_WIDTH, 5, "white");
 }
 
@@ -64,6 +61,13 @@ function updateGameArea() {
   if(!track.contains(vehicle.x, vehicle.y, vehicle.width, vehicle.height)){
     endGame();
   }
+
+  //check to see if vehicle hit obstacle; if so, end game
+  $.each(track.obstacles, function(){
+    if(this.intersects(vehicle.x, vehicle.y, vehicle.width, vehicle.height)){
+      endGame();
+    }
+  });
 }
 
 function endGame() {
@@ -75,20 +79,18 @@ function endGame() {
 //--------------VEHICLE------------------
 var vehicle;
 
-
-function vehicle(width, height, color, x, y, speedV, speedH) {
+function vehicle(width, height, img, x, y, speedV, speedH) {
   this.width = width;
   this.height = height;
   this.x = x;
   this.y = y;
   this.speedV = speedV;
   this.speedH = speedH;
+  this.image = new Image();
+  this.image.src = img;
 
   //function to draw vehicle
-<<<<<<< HEAD
   this.update = function () {
-=======
-  this.update = function(){
     //move vehicle
     var newX = this.x;
     if(leftKeyDown){
@@ -99,24 +101,11 @@ function vehicle(width, height, color, x, y, speedV, speedH) {
     }
     vehicle.moveTo(newX, vehicle.y);
 
->>>>>>> 0abd6441dc144518e7b878b53642ae88bd84b0df
-    context.fillStyle = color;
-    context.fillRect(this.x, this.y, this.width, this.height);
+    context.drawImage(this.image, 
+      this.x, 
+      this.y,
+      this.width, this.height);
   };
-
-// function vehicle(width, height, color, x, y, speedV, speedH) {
-//   this.width = width;
-//   this.height = height;
-//   this.x = x;
-//   this.y = y; 
-//   this.speedV = speedV;
-//   this.speedH = speedH;
-
-//   //function to draw vehicle
-//   this.update = function(){
-//     context.fillStyle = color;
-//     context.fillRect(this.x, this.y, this.width, this.height);
-//   };
 
   //functions to determine if car can move to new location (x, y)
   this.canMoveToX = function(x) {
@@ -153,19 +142,69 @@ function track(width, lineHeight, color) {
   this.lineHeight = lineHeight;
   this.color = color;
 
-  //function to draw track
+  //function to update track
   this.update = function() {
     this.scroll(SCROLL_SPEED);
+    this.addObstacles(OBSTACLE_FREQUENCY);
 
     $.each(this.lines, function(){
         this.update();
-    })
+    });
+
+    $.each(this.obstacles, function(){
+        this.update();
+    });
   };
 
   //initialize lines
   this.lines = [];
   initTrackLines(this, CANVAS_HEIGHT/this.lineHeight, this.width, CANVAS_HEIGHT - this.lineHeight, this.lineHeight, this.color);
 
+  //obstacles
+  this.obstacles = [];
+  this.obstacle = function(x, y, w, h, img){
+    this.x = x;
+    this.y = y;
+    this.width = w;
+    this.height = h;
+    this.image = new Image();
+    this.image.src = img;
+
+    this.update = function(){
+      context.drawImage(this.image, 
+        this.x, 
+        this.y,
+        this.width, this.height);
+    }
+
+    this.intersects = function(x, y, w, h){
+      var topLeft = isWithinRect(this.x, this.y, x, y, w, h);
+      var topRight = isWithinRect(this.x + this.width, this.y, x, y, w, h);
+      var bottomLeft = isWithinRect(this.x, this.y + this.height, x, y, w, h);
+      var bottomRight = isWithinRect(this.x + this.width, this.y + this.height, x, y, w, h);
+
+      return topLeft || topRight || bottomLeft || bottomRight;
+
+      //note - this will have errors if the obstacle is bigger than the object
+    }
+  }
+  
+  this.addObstacles = function(obsFreq) {
+    //add a new obstacle if the most recent one has moved far enough down the screen
+    if (track.obstacles.length == 0 || track.obstacles[0].y > obsFreq) {
+      //calculate x location for new obstacle
+      var lineWidth = track.lines[track.lines.length - 1].width
+      var lineCenterX = track.lines[track.lines.length - 1].x + lineWidth/2;
+      var obsCenterX = lineCenterX + Math.random()*lineWidth*0.7 - lineWidth*0.7/2
+      var obsWidth = 25;
+
+      //pick a random image
+      var imgNum = Math.round(Math.random()*(NUM_PROFS-1));
+
+      track.obstacles.unshift(new this.obstacle(obsCenterX - obsWidth/2, 0, obsWidth, 32, "img/profs/" + imgNum.toString() + ".jpg"));
+    }
+  }
+  
   //function to scroll the track down by y pixels
   this.scroll = function(y){
     //figure out how many lines to add/remove
@@ -183,6 +222,16 @@ function track(width, lineHeight, color) {
 
     //add new lines
     initTrackLines(track, n, track.width, track.lines[track.lines.length-1].y - track.lineHeight, track.lineHeight, track.color);
+
+    //move obstacles down the track
+    $.each(track.obstacles, function(){
+      this.y += y;
+    });
+
+    //remove obstacles that are past the bottom of the canvas
+    while (track.obstacles.length > 0 && track.obstacles[track.obstacles.length - 1].y > CANVAS_HEIGHT){
+      track.obstacles.pop();
+    }
   }
 
   //function to determine if a point is on track
@@ -203,6 +252,7 @@ function track(width, lineHeight, color) {
     //if we made it here, we're good!
     return true;
   }
+
 }
 
 //variables used by initTrackLines to create smooth random track movement

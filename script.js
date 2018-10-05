@@ -7,6 +7,7 @@ var SCROLL_SPEED = 15;
 var REFRESH_RATE = 30;
 var OBSTACLE_FREQUENCY = 300;
 var NUM_PROFS = 32;
+var WIN_TIME = 60;
 
 
 //-----------GENERAL SET UP----------------

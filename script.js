@@ -1,13 +1,19 @@
-//------------CONSTANTS-------------------
+//------------GLOBAL VARS-------------------
 var CANVAS_WIDTH = 800;
 var CANVAS_HEIGHT = 600;
 var TRACK_WIDTH = 300;
 var MAX_X_OFFSET = 200;
-var SCROLL_SPEED = 15;
+var SCROLL_SPEED;
+var SPEED_INCREASE = 5;
+var TRACK_VARIATION;
+var TRACK_VARIATION_INCREASE = 25;
 var REFRESH_RATE = 30;
 var OBSTACLE_FREQUENCY = 300;
 var NUM_PROFS = 32;
-var WIN_TIME = 60;
+var DIF_CHANGE = 10000;
+var LEVEL = 1;
+var WIN_LEVEL = 5;
+var SECONDS;
 
 
 //-----------GENERAL SET UP----------------
@@ -23,12 +29,28 @@ var myGameArea = {
     context = this.context;
     document.body.insertBefore(this.canvas, document.body.childNodes[0]);
     this.interval = setInterval(updateGameArea, REFRESH_RATE);
+    this.levelUpInterval = setInterval(levelUp, DIF_CHANGE);
+    this.timeInterval = setInterval(secondPassed, 1000);
+    SECONDS = 0;
+    LEVEL = 1;
+    SCROLL_SPEED = 5;
+    TRACK_VARIATION = 100;
   },
   clear : function() {
       this.context.clearRect(0, 0, this.canvas.width, this.canvas.height);
   },
   stop : function() {
     clearInterval(this.interval);
+    clearInterval(this.levelUpInterval);
+    clearInterval(this.timeInterval);
+  },
+  pause : function() {
+    this.stop();
+  },
+  resume: function() {
+    this.interval = setInterval(updateGameArea, REFRESH_RATE);
+    this.levelUpInterval = setInterval(levelUp, DIF_CHANGE);
+    this.timeInterval = setInterval(secondPassed, 1000);
   }
 };
 
@@ -40,9 +62,11 @@ function preload(){
 
 function startGame() {
   myGameArea.start();
-  vehicle = new vehicle(30, 60, "img/car.png", CANVAS_WIDTH/2 - 15, CANVAS_HEIGHT - 100, 10, 10);
+  $("#level span").text(LEVEL.toString());
+  $("#time span").text(SECONDS.toString() + "  seconds");
+  myVehicle = new vehicle(30, 60, "img/car.png", CANVAS_WIDTH/2 - 15, CANVAS_HEIGHT - 100, 10, 10);
 
-  track = new track(TRACK_WIDTH, 5, "white");
+  myTrack = new track(TRACK_WIDTH, 5, "white");
 }
 
 function updateGameArea() {
@@ -53,19 +77,19 @@ function updateGameArea() {
   context.fillRect(0, 0, canvas.width, canvas.height);
 
   //update track
-  track.update();
+  myTrack.update();
 
   //update vehicle
-  vehicle.update();
+  myVehicle.update();
 
   //check to see if vehicle is off track; if so, end game
-  if(!track.contains(vehicle.x, vehicle.y, vehicle.width, vehicle.height)){
+  if(!myTrack.contains(myVehicle.x, myVehicle.y, myVehicle.width, myVehicle.height)){
     endGame();
   }
 
   //check to see if vehicle hit obstacle; if so, end game
-  $.each(track.obstacles, function(){
-    if(this.intersects(vehicle.x, vehicle.y, vehicle.width, vehicle.height)){
+  $.each(myTrack.obstacles, function(){
+    if(this.intersects(myVehicle.x, myVehicle.y, myVehicle.width, myVehicle.height)){
       endGame();
     }
   });
@@ -73,12 +97,34 @@ function updateGameArea() {
 
 function endGame() {
   myGameArea.stop();
-  alert("You lost :(");
+  $("#msg").html("<h1>GAME OVER</h1><h2>You survived " + SECONDS.toString() + " seconds.<h2><button id='startOver'>Play Again</button>");
+  $("#startOver").on("click", function(){
+    location.reload();
+  });
 }
 
+function levelUp() {
+  LEVEL++;
+  if (LEVEL == WIN_LEVEL) {
+    myGameArea.pause();
+    $("#msg").html("<h1>YOU REACHED PALLET TOWN</h1><h2>Keep playing to see how long you can survive.<h2><button id='resume'>Continue</button>");
+    $("#resume").on("click", function(){
+      myGameArea.resume();
+    });
+  }
+  SCROLL_SPEED += SPEED_INCREASE;
+  TRACK_VARIATION += TRACK_VARIATION_INCREASE;
+
+  $("#level span").text(LEVEL.toString());
+}
+
+function secondPassed() {
+  SECONDS++;
+  $("#time span").text(SECONDS.toString() + "seconds");
+}
 
 //--------------VEHICLE------------------
-var vehicle;
+var myVehicle;
 
 function vehicle(width, height, img, x, y, speedV, speedH) {
   this.width = width;
@@ -95,12 +141,12 @@ function vehicle(width, height, img, x, y, speedV, speedH) {
     //move vehicle
     var newX = this.x;
     if(leftKeyDown){
-      newX -= vehicle.speedH;
+      newX -= myVehicle.speedH;
     }
     if(rightKeyDown){
-      newX += vehicle.speedH;
+      newX += myVehicle.speedH;
     }
-    vehicle.moveTo(newX, vehicle.y);
+    myVehicle.moveTo(newX, myVehicle.y);
 
     context.drawImage(this.image, 
       this.x, 
@@ -110,10 +156,10 @@ function vehicle(width, height, img, x, y, speedV, speedH) {
 
   //functions to determine if car can move to new location (x, y)
   this.canMoveToX = function(x) {
-    return x >= 0 && (x + vehicle.width) <= CANVAS_WIDTH;
+    return x >= 0 && (x + myVehicle.width) <= CANVAS_WIDTH;
   };
   this.canMoveToY = function(y) {
-    return y >= 0 && (y+ vehicle.height) <= CANVAS_HEIGHT;
+    return y >= 0 && (y+ myVehicle.height) <= CANVAS_HEIGHT;
   };
   this.canMoveTo = function(x, y){
     return this.canMoveToX(x) && this.canMoveToY(y);
@@ -136,7 +182,7 @@ function vehicle(width, height, img, x, y, speedV, speedH) {
 }
 
 //-------------------TRACK------------------------
-var track;
+var myTrack;
 
 function track(width, lineHeight, color) {
   this.width = width;
@@ -192,46 +238,46 @@ function track(width, lineHeight, color) {
   
   this.addObstacles = function(obsFreq) {
     //add a new obstacle if the most recent one has moved far enough down the screen
-    if (track.obstacles.length == 0 || track.obstacles[0].y > obsFreq) {
+    if (myTrack.obstacles.length == 0 || myTrack.obstacles[0].y > obsFreq) {
       //calculate x location for new obstacle
-      var lineWidth = track.lines[track.lines.length - 1].width
-      var lineCenterX = track.lines[track.lines.length - 1].x + lineWidth/2;
+      var lineWidth = myTrack.lines[myTrack.lines.length - 1].width
+      var lineCenterX = myTrack.lines[myTrack.lines.length - 1].x + lineWidth/2;
       var obsCenterX = lineCenterX + Math.random()*lineWidth*0.7 - lineWidth*0.7/2
       var obsWidth = 25;
 
       //pick a random image
       var imgNum = Math.round(Math.random()*(NUM_PROFS-1));
 
-      track.obstacles.unshift(new this.obstacle(obsCenterX - obsWidth/2, 0, obsWidth, 32, "img/profs/" + imgNum.toString() + ".jpg"));
+      myTrack.obstacles.unshift(new this.obstacle(obsCenterX - obsWidth/2, 0, obsWidth, 32, "img/profs/" + imgNum.toString() + ".jpg"));
     }
   }
   
   //function to scroll the track down by y pixels
   this.scroll = function(y){
     //figure out how many lines to add/remove
-    var n = Math.abs(Math.round(y/track.lineHeight));
+    var n = Math.abs(Math.round(y/myTrack.lineHeight));
       
     //remove track lines from bottom (the track lines at end of array are at bottom of screen)
     for(var i = 0; i < n; i++) {
-      track.lines.shift();
+      myTrack.lines.shift();
     }
 
     //update y value on all lines
-    $.each(track.lines, function(){
+    $.each(myTrack.lines, function(){
       this.y += y;
     });
 
     //add new lines
-    initTrackLines(track, n, track.width, track.lines[track.lines.length-1].y - track.lineHeight, track.lineHeight, track.color);
+    initTrackLines(myTrack, n, myTrack.width, myTrack.lines[myTrack.lines.length-1].y - myTrack.lineHeight, myTrack.lineHeight, myTrack.color);
 
     //move obstacles down the track
-    $.each(track.obstacles, function(){
+    $.each(myTrack.obstacles, function(){
       this.y += y;
     });
 
     //remove obstacles that are past the bottom of the canvas
-    while (track.obstacles.length > 0 && track.obstacles[track.obstacles.length - 1].y > CANVAS_HEIGHT){
-      track.obstacles.pop();
+    while (myTrack.obstacles.length > 0 && myTrack.obstacles[myTrack.obstacles.length - 1].y > CANVAS_HEIGHT){
+      myTrack.obstacles.pop();
     }
   }
 
@@ -263,7 +309,7 @@ var cyclesPerGoal = 25;
 var goalProgressCounter = cyclesPerGoal;
 
 //function to create the lines of the track
-function initTrackLines(track, numLines, width, initialY, lineHeight, color) {
+function initTrackLines(myTrack, numLines, width, initialY, lineHeight, color) {
   var xOffset;
   var y = initialY;
 
@@ -275,7 +321,7 @@ function initTrackLines(track, numLines, width, initialY, lineHeight, color) {
 
       //make sure that the xOffsetGoal isn't too big
       do {
-        xOffsetGoal += Math.random()*100 - 50;
+        xOffsetGoal += Math.random()*TRACK_VARIATION - TRACK_VARIATION/2;
       }
       while (xOffsetGoal > MAX_X_OFFSET || xOffsetGoal < -MAX_X_OFFSET);
     }
@@ -285,7 +331,7 @@ function initTrackLines(track, numLines, width, initialY, lineHeight, color) {
     xOffset = oldXOffsetGoal + goalProgressCounter*(xOffsetGoal-oldXOffsetGoal)/cyclesPerGoal;
 
     //add the lines
-    track.lines.push(new trackLine(xOffset, width, y, lineHeight, color));
+    myTrack.lines.push(new trackLine(xOffset, width, y, lineHeight, color));
     
     //iterate the necessary variables
     goalProgressCounter++;
@@ -314,10 +360,14 @@ function isWithinRect(x, y, rx, ry, rw, rh) {
   return x >= rx && y >= ry && x <= (rx + rw) && y <= (ry + rh);
 }
 
-//-----------------RUNNING GAME-------------------
+//-----------------DOM INTERACTION-------------------
 $(document).ready(function() {
 
-  startGame();
+  $("#startBtn").on("click", function(){
+    $("#instructions").hide();
+    $("#stats").show();
+    startGame();
+  });
 
   //move car when arrow keys are pressed
   $(document).on("keydown", function(e) {
@@ -338,8 +388,8 @@ $(document).ready(function() {
   });
 
   $(document).on("keyup", function(e) {
-    var newX = vehicle.x;
-    var newY = vehicle.y;
+    var newX = myVehicle.x;
+    var newY = myVehicle.y;
 
     switch(e.which){
       case 37: // left
@@ -348,6 +398,14 @@ $(document).ready(function() {
 
       case 39: // right
         rightKeyDown = false;
+      break;
+
+      case 80: //P - pause
+        myGameArea.pause();
+      break;
+
+      case 82: //R - resume
+        myGameArea.resume();
       break;
 
       default: return; // exit this handler for other keys
